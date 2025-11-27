@@ -16,10 +16,11 @@
         "datatype": "auto",
         "broker": "b3f3b4b5.4c0c48",
         "x": 150,
-        "y": 200,
+        "y": 140,
         "wires": [
             [
-                "c9c2e2e4.363d2"
+                "c9c2e2e4.363d2",
+                "a1b3c4d5.e6f7g8"
             ]
         ]
     },
@@ -31,9 +32,144 @@
         "server": "a1b2c3d4.5e4d5c",
         "allclients": "true",
         "path": "/ws/data",
-        "x": 450,
-        "y": 200,
+        "x": 690,
+        "y": 220,
         "wires": []
+    },
+    {
+        "id": "a1b3c4d5.e6f7g8",
+        "type": "file",
+        "z": "da8a7c5c.25758",
+        "name": "Archive Live Data",
+        "filename": "/data/logs/full_archive.jsonl",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 430,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e5f6g7h8.i9j0k1",
+        "type": "websocket in",
+        "z": "da8a7c5c.25758",
+        "name": "Dashboard Commands",
+        "server": "a1b2c3d4.5e4d5c",
+        "x": 160,
+        "y": 300,
+        "wires": [
+            [
+                "l2m3n4o5.p6q7r8"
+            ]
+        ]
+    },
+    {
+        "id": "l2m3n4o5.p6q7r8",
+        "type": "json",
+        "z": "da8a7c5c.25758",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 330,
+        "y": 300,
+        "wires": [
+            [
+                "s9t0u1v2.w3x4y5"
+            ]
+        ]
+    },
+    {
+        "id": "s9t0u1v2.w3x4y5",
+        "type": "switch",
+        "z": "da8a7c5c.25758",
+        "name": "Route Command",
+        "property": "payload.action",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "replay",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 150,
+        "y": 360,
+        "wires": [
+            [
+                "z6a7b8c9.d0e1f2"
+            ]
+        ]
+    },
+    {
+        "id": "z6a7b8c9.d0e1f2",
+        "type": "change",
+        "z": "da8a7c5c.25758",
+        "name": "Set Filename",
+        "rules": [
+            {
+                "t": "set",
+                "p": "filename",
+                "pt": "msg",
+                "to": "payload.file",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 320,
+        "y": 360,
+        "wires": [
+            [
+                "a3b4c5d6.e7f8g9"
+            ]
+        ]
+    },
+    {
+        "id": "a3b4c5d6.e7f8g9",
+        "type": "file in",
+        "z": "da8a7c5c.25758",
+        "name": "Read Log File",
+        "filename": "",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 490,
+        "y": 360,
+        "wires": [
+            [
+                "h0i1j2k3.l4m5n6"
+            ]
+        ]
+    },
+    {
+        "id": "h0i1j2k3.l4m5n6",
+        "type": "split",
+        "z": "da8a7c5c.25758",
+        "name": "",
+        "splt": "\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 650,
+        "y": 360,
+        "wires": [
+            [
+                "c9c2e2e4.363d2"
+            ]
+        ]
     },
     {
         "id": "b3f3b4b5.4c0c48",
@@ -63,31 +199,74 @@
         "wholemsg": "false"
     },
     {
-        "id": "d1e2f3g4.h5i6j7",
+        "id": "b1c2d3e4.f5g6h7",
         "type": "http in",
         "z": "da8a7c5c.25758",
-        "name": "Health Check",
-        "url": "/health",
+        "name": "Get Log Files",
+        "url": "/api/logs",
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
         "x": 130,
-        "y": 450,
+        "y": 520,
         "wires": [
             [
-                "k8l9m0n1.o2p3q4"
+                "g8h9i0j1.k2l3m4"
             ]
         ]
     },
     {
-        "id": "k8l9m0n1.o2p3q4",
+        "id": "g8h9i0j1.k2l3m4",
+        "type": "exec",
+        "z": "da8a7c5c.25758",
+        "command": "ls",
+        "addpay": false,
+        "append": "/data/logs",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "List Log Files",
+        "x": 310,
+        "y": 520,
+        "wires": [
+            [
+                "n5o6p7q8.r9s0t1"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "n5o6p7q8.r9s0t1",
+        "type": "function",
+        "z": "da8a7c5c.25758",
+        "name": "Format as JSON",
+        "func": "// The output of ls is a string with filenames separated by newlines\nmsg.payload = msg.payload.split('\n').filter(file => file.length > 0);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 520,
+        "wires": [
+            [
+                "u2v3w4x5.y6z7a8"
+            ]
+        ]
+    },
+    {
+        "id": "u2v3w4x5.y6z7a8",
         "type": "http response",
         "z": "da8a7c5c.25758",
         "name": "",
         "statusCode": "200",
-        "headers": {},
-        "x": 330,
-        "y": 450,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "x": 670,
+        "y": 520,
         "wires": []
     }
 ]
