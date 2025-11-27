@@ -1,0 +1,115 @@
+[
+    {
+        "id": "da8a7c5c.25758",
+        "type": "tab",
+        "label": "Drone Data Ingestion",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "a2b6f8f7.5d4908",
+        "type": "mqtt in",
+        "z": "da8a7c5c.25758",
+        "name": "MQTT Drone Data",
+        "topic": "dronedata/#",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "b3f3b4b5.4c0c48",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            [
+                "c9c2e2e4.363d2"
+            ]
+        ]
+    },
+    {
+        "id": "c9c2e2e4.363d2",
+        "type": "websocket out",
+        "z": "da8a7c5c.25758",
+        "name": "Broadcast to Dashboard",
+        "server": "a1b2c3d4.5e4d5c",
+        "allclients": "true",
+        "path": "/ws/data",
+        "x": 450,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "f4g5h6i7.j8k9l0",
+        "type": "exec",
+        "z": "da8a7c5c.25758",
+        "command": "python3",
+        "addpay": false,
+        "append": "dronecan_listener.py",
+        "useSpawn": "true",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "DroneCAN Listener",
+        "x": 150,
+        "y": 300,
+        "wires": [
+            [
+                "c9c2e2e4.363d2"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "b3f3b4b5.4c0c48",
+        "type": "mqtt-broker",
+        "name": "Local MQTT",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "a1b2c3d4.5e4d5c",
+        "type": "websocket-listener",
+        "path": "/ws/data",
+        "wholemsg": "false"
+    },
+    {
+        "id": "d1e2f3g4.h5i6j7",
+        "type": "http in",
+        "z": "da8a7c5c.25758",
+        "name": "Health Check",
+        "url": "/health",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 130,
+        "y": 450,
+        "wires": [
+            [
+                "k8l9m0n1.o2p3q4"
+            ]
+        ]
+    },
+    {
+        "id": "k8l9m0n1.o2p3q4",
+        "type": "http response",
+        "z": "da8a7c5c.25758",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 330,
+        "y": 450,
+        "wires": []
+    }
+]

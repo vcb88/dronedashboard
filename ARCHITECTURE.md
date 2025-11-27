@@ -1,82 +1,52 @@
-# Architecture Proposals for Drone Dashboard
+# Architecture for Drone Dashboard
 
-This document presents three potential architectural options for the Drone Dashboard project. Each option considers the core requirements: data ingestion (MQTT, DroneCAN), real-time visualization, and log analysis.
+## 1. Chosen Architecture: The Integrated Node-RED Stack
 
----
+After discussion, the chosen architecture for the Drone Dashboard project is the **Integrated Node-RED Stack**.
 
-### Key Requirements Summary
+This decision is based on the following key factors:
+*   **Resource Efficiency:** The service will run directly on the Wiren Board, which has limited resources. Node-RED is lightweight and well-suited for this environment.
+*   **Rapid Prototyping:** The flow-based nature of Node-RED allows for quick setup and modification of data pipelines, which is ideal for development and testing.
+*   **Industry Standard:** Node-RED is a very common and well-supported tool in the IoT and MQTT ecosystem, making it a familiar choice for this domain.
 
-*   **Backend:** Must handle data processing. Python or Node.js are preferred.
-*   **Frontend:** Must be lightweight for potential resource-constrained environments. React or Vue are preferred.
-*   **Data Ingestion:** Must support MQTT and DroneCAN protocols.
-*   **Real-time Communication:** Must push live data to the frontend efficiently (e.g., via WebSockets).
-*   **Data Storage:** Must handle storing and retrieving session logs.
-*   **Web Server:** Must serve the frontend application.
+### 1.1. Architectural Components
 
----
+*   **Core Logic & Data Ingestion:** **Node-RED**. A single Node-RED instance will serve as the core of the application.
+    *   **MQTT:** Data will be ingested using Node-RED's native `mqtt-in` nodes.
+    *   **DroneCAN:** Data will be ingested via a Python script. A Node-RED `exec` node will be used to call this script and capture its standard output.
+*   **Backend API & Real-time Channel:**
+    *   Simple API endpoints (if needed) will be created using `http-in` nodes.
+    *   Real-time data will be streamed to the frontend using `websocket-out` nodes.
+*   **Frontend Application:** A **React** Single-Page Application (SPA), likely built with **Vite** for its lightweight nature.
+*   **Web Server:** The Node-RED instance itself will be configured to serve the static build files of the React frontend. This creates a single, unified service.
+*   **Data Storage:**
+    *   **Archived Logs:** Node-RED will be responsible for writing incoming data to log files on the local filesystem (e.g., in CSV or JSON format).
+    *   **Log Access:** The dashboard will allow users to either select a log file from the server's storage or upload a log file from their local machine.
 
-## Option 1: The Python-Centric Stack (FastAPI + Vue.js)
+### 1.2. Data Flow Diagram
 
-This option uses a robust Python backend with a lightweight and flexible Vue.js frontend.
+```
+[MQTT Broker] ----> (mqtt-in) ----> [Node-RED Flow] ----> (websocket-out) ----> [React Frontend]
+                                          ^
+[DroneCAN Bus] -> [Py Script] -> (exec) ---|---> [Log File]
+```
 
-*   **Backend:** **Python** with the **FastAPI** framework.
-*   **Data Ingestion:** A standalone Python service using `paho-mqtt` and `dronecan` libraries. This service acts as a "collector," which listens to the data sources, processes/normalizes the data, and forwards it to the main FastAPI backend via an internal API call or a message queue.
-*   **Real-time Channel:** **WebSockets** managed by FastAPI to stream data to connected frontend clients.
-*   **Frontend:** A **Vue.js** Single-Page Application (SPA).
-*   **Data Storage:** Simple and robust file-based storage on the device's filesystem for logs (e.g., structured JSON lines or CSV files).
-*   **Web Server:** **Nginx** to serve the static Vue.js files and to act as a reverse proxy to the FastAPI backend API.
+## 2. Implementation Plan
 
-#### Pros:
-*   **Robust & Scalable:** FastAPI is extremely fast and suitable for high-performance data processing.
-*   **Strong Python Libraries:** Python has excellent, mature libraries for both MQTT and DroneCAN, simplifying the data ingestion logic.
-*   **Clear Separation of Concerns:** The collector service, backend API, and frontend are all clearly decoupled, making them easier to develop, maintain, and debug independently.
-
-#### Cons:
-*   **Complexity:** This stack has the most moving parts (Collector, FastAPI, Nginx), which can increase initial setup and deployment complexity.
-*   **Two Services:** Requires managing at least two separate Python processes (collector and backend API).
-
----
-
-## Option 2: The Integrated Node-RED Stack
-
-This option leverages Node-RED's strengths in IoT data flow management to act as the core of the system.
-
-*   **Backend & Data Ingestion:** **Node-RED**. Its flow-based visual programming is ideal for handling data pipelines.
-    *   **MQTT:** Natively supported with built-in nodes.
-    *   **DroneCAN:** Can be integrated by using an `exec` node to call a dedicated Python script (since Node.js libraries for DroneCAN are less mature) or by creating a custom Node-RED node.
-*   **Real-time Channel:** **WebSockets** are natively supported with built-in nodes, making it easy to stream data out to the frontend.
-*   **Frontend:** A **React** Single-Page Application (SPA).
-*   **Data Storage:** Node-RED flows can easily write log files to the local filesystem or a simple database like SQLite.
-*   **Web Server:** The internal Node.js web server in Node-RED can be configured to serve the static React build files, simplifying the stack.
-
-#### Pros:
-*   **Rapid Prototyping:** The visual, flow-based nature of Node-RED makes it incredibly fast for setting up and modifying data pipelines.
-*   **Simplified Stack:** Node-RED can potentially manage data ingestion, processing, the backend API, and serving the frontend, reducing the number of separate services to manage.
-*   **Excellent IoT/MQTT Support:** Node-RED is purpose-built for this kind of data flow.
-
-#### Cons:
-*   **DroneCAN Integration:** May require a workaround (like calling a Python script), which makes the solution less elegant than a pure Node.js or Python stack.
-*   **Scalability/Performance:** While excellent for many tasks, complex, high-throughput logic may be harder to optimize in Node-RED compared to pure code in FastAPI or Node.js.
+1.  **Setup Node-RED:**
+    *   Install Node-RED on the development machine.
+    *   Configure `settings.js` to enable serving static files from a dedicated `frontend` directory.
+    *   Create an initial `flows.json` with a basic MQTT -> WebSocket pipeline.
+2.  **Scaffold Frontend:**
+    *   Initialize a new React project using Vite in the `frontend` directory.
+    *   Add a WebSocket client to connect to the Node-RED WebSocket endpoint.
+    *   Integrate a charting library (e.g., Chart.js, ECharts) to visualize the data.
+3.  **Develop DroneCAN Integration:**
+    *   Create a Python script (`dronecan_listener.py`) that reads data from the CAN bus and prints it to standard output as JSON.
+    *   Configure the `exec` node in Node-RED to run this script.
+4.  **Develop Log Management:**
+    *   Create Node-RED flows for writing incoming data to timestamped log files.
+    *   Implement frontend components for uploading log files and selecting server-side log files for analysis.
 
 ---
-
-## Option 3: The "All-in-One" JavaScript Stack (Next.js)
-
-This option consolidates the frontend and backend into a single framework using Next.js, a popular React framework.
-
-*   **Backend:** **Next.js API Routes**. This feature allows you to build a Node.js backend directly within your React project structure.
-*   **Data Ingestion:** A background **Node.js service** (which could be part of the same project). This service would use libraries like `mqtt.js` and a Python script wrapper for DroneCAN. It would communicate with the Next.js backend.
-*   **Real-time Channel:** A WebSocket server (e.g., using the `ws` library) can be integrated with the Next.js custom server environment.
-*   **Frontend:** **Next.js (React)** by definition.
-*   **Data Storage:** The backend can write logs to the filesystem.
-*   **Web Server:** The Next.js development and production server is built-in. For production, you run it as a single standalone Node.js application.
-
-#### Pros:
-*   **Unified Language & Repository:** The entire application (frontend and backend) can be managed in a single language (JavaScript/TypeScript) and a single repository, simplifying development workflow and tooling.
-*   **Simplified Deployment:** Can be deployed as a single Node.js process, making it very straightforward to manage.
-*   **Strong React Ecosystem:** Leverages the vast ecosystem and component libraries available for React.
-
-#### Cons:
-*   **Resource Usage:** Next.js can be more resource-intensive than a simple static site server, which might be a consideration for a device like the Wiren Board.
-*   **Complex Real-time Setup:** Integrating a custom WebSocket server with the Next-js dev/prod environment can be more complex than in FastAPI or Node-RED, which are designed for it.
-*   **DroneCAN Integration:** Same challenge as Option 2; likely requires a Python script wrapper.
+*(This document supersedes the initial proposals)*
