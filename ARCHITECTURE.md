@@ -1,52 +1,83 @@
 # Architecture for Drone Dashboard
 
-## 1. Chosen Architecture: The Integrated Node-RED Stack
+## 1. Chosen Architecture: Microservice-based with Node-RED
 
-After discussion, the chosen architecture for the Drone Dashboard project is the **Integrated Node-RED Stack**.
+The chosen architecture for the Drone Dashboard project is a **Microservice-based Stack** with **Node-RED** at its core for data processing and UI hosting. The services are orchestrated via Docker Compose.
 
-This decision is based on the following key factors:
-*   **Resource Efficiency:** The service will run directly on the Wiren Board, which has limited resources. Node-RED is lightweight and well-suited for this environment.
-*   **Rapid Prototyping:** The flow-based nature of Node-RED allows for quick setup and modification of data pipelines, which is ideal for development and testing.
-*   **Industry Standard:** Node-RED is a very common and well-supported tool in the IoT and MQTT ecosystem, making it a familiar choice for this domain.
+This approach was chosen for its balance of:
+*   **Modularity:** Separating the data source (Emulator) from the main application logic.
+*   **Resource Efficiency:** Using lightweight components suitable for running on edge devices like a Wiren Board.
+*   **Rapid Prototyping:** Leveraging Node-RED's visual data flow programming.
 
-### 1.1. Architectural Components
+## 2. Architectural Components & Current Implementation
 
-*   **Core Logic & Data Ingestion:** **Node-RED**. A single Node-RED instance will serve as the core of the application.
-    *   **MQTT:** Data will be ingested using Node-RED's native `mqtt-in` nodes.
-    *   **DroneCAN:** Data will be ingested via a Python script. A Node-RED `exec` node will be used to call this script and capture its standard output.
-*   **Backend API & Real-time Channel:**
-    *   Simple API endpoints (if needed) will be created using `http-in` nodes.
-    *   Real-time data will be streamed to the frontend using `websocket-out` nodes.
-*   **Frontend Application:** A **React** Single-Page Application (SPA), likely built with **Vite** for its lightweight nature.
-*   **Web Server:** The Node-RED instance itself will be configured to serve the static build files of the React frontend. This creates a single, unified service.
-*   **Data Storage:**
-    *   **Archived Logs:** Node-RED will be responsible for writing incoming data to log files on the local filesystem (e.g., in CSV or JSON format).
-    *   **Log Access:** The dashboard will allow users to either select a log file from the server's storage or upload a log file from their local machine.
+*   **`emulator` Service:**
+    *   **Description:** A standalone Python service that replays pre-generated, realistic flight mission data from a `.jsonl` file.
+    *   **Implementation Status:** **Done**. It connects to the MQTT broker and publishes telemetry messages with realistic timing.
 
-### 1.2. Data Flow Diagram
+*   **`mqtt-broker` Service:**
+    *   **Description:** An Eclipse Mosquitto instance that acts as the central message bus.
+    *   **Implementation Status:** **Done**. Included in the Docker Compose setup.
 
+*   **`dronedashboard` Service:**
+    *   **Description:** A Node-RED instance that forms the core of the user-facing application.
+    *   **Implementation Status:** **Done**. The flow is configured to:
+        1.  Subscribe to the `dronedata/telemetry` MQTT topic.
+        2.  Append all incoming messages to a log file (`/data/logs/full_archive.jsonl`).
+        3.  Stream live data to the frontend via a WebSocket (`/ws/data`).
+        4.  Provide an HTTP API endpoint (`/api/logs`) to list available log files.
+        5.  Listen for "replay" commands from the frontend via WebSocket to stream archived files.
+        6.  Host the static React frontend.
+        
+*   **Frontend Application:**
+    *   **Description:** A React Single-Page Application (SPA) built with Vite.
+    *   **Implementation Status:** **Done**. The frontend can:
+        1.  Visualize live data on a chart.
+        2.  Fetch and display a list of archived logs.
+        3.  Request a log replay and display the replayed data.
+
+## 3. Data Flow Diagrams
+
+### Live Data & Archiving Flow
 ```
-[MQTT Broker] ----> (mqtt-in) ----> [Node-RED Flow] ----> (websocket-out) ----> [React Frontend]
-                                          ^
-[DroneCAN Bus] -> [Py Script] -> (exec) ---|---> [Log File]
++----------+      +-------------+      +--------------------+      +-----------+      +----------+
+| Emulator |----->| MQTT Broker |----->| Node-RED (mqtt-in) |----->| WebSocket |----->| Frontend |
++----------+      +-------------+      +--------------------+      +-----------+      +----------+
+                                                 |
+                                                 |
+                                                 v
+                                          +--------------+
+                                          | Log File     |
+                                          | (.jsonl)     |
+                                          +--------------+
 ```
 
-## 2. Implementation Plan
+### Log Replay Flow
+```
++----------+      +------------------+      +--------------------+      +-----------+
+| Frontend |----->| WebSocket (send) |----->| Node-RED (ws-in)   |      |           |
+| (Click)  |      | {"action":"replay"} |      | (Parses Command)   |      |           |
++----------+      +------------------+      +----------+---------+      |           |
+                                                        |                |           |
+                                                        v                |           |
+                                             +----------+---------+      |           |
+                                             | Reads Specified File |      |           |
+                                             +----------+---------+      |           |
+                                                        |                |           |
+                                                        v                |           |
+                                             +----------+---------+      |           |
+                                             | Splits File by Line  |      |           |
+                                             +--------------------+      |           |
+                                                        |                |           |
+                                                        v                |           |
++----------+      +--------------------+      +--------------------+      |           |
+| Frontend |<-----| WebSocket (stream) |<-----| (Forwards each line) |<-----+           |
++----------+      +--------------------+      +--------------------+
+```
 
-1.  **Setup Node-RED:**
-    *   Install Node-RED on the development machine.
-    *   Configure `settings.js` to enable serving static files from a dedicated `frontend` directory.
-    *   Create an initial `flows.json` with a basic MQTT -> WebSocket pipeline.
-2.  **Scaffold Frontend:**
-    *   Initialize a new React project using Vite in the `frontend` directory.
-    *   Add a WebSocket client to connect to the Node-RED WebSocket endpoint.
-    *   Integrate a charting library (e.g., Chart.js, ECharts) to visualize the data.
-3.  **Develop DroneCAN Integration:**
-    *   Create a Python script (`dronecan_listener.py`) that reads data from the CAN bus and prints it to standard output as JSON.
-    *   Configure the `exec` node in Node-RED to run this script.
-4.  **Develop Log Management:**
-    *   Create Node-RED flows for writing incoming data to timestamped log files.
-    *   Implement frontend components for uploading log files and selecting server-side log files for analysis.
+## 4. Future Development Roadmap
+
+For planned future enhancements, please see the [Product Roadmap](./roadmap.md).
 
 ---
-*(This document supersedes the initial proposals)*
+*(This document supersedes the initial proposals and reflects the current implemented state.)*
