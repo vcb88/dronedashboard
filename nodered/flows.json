@@ -16,7 +16,7 @@
         "datatype": "auto",
         "broker": "b3f3b4b5.4c0c48",
         "x": 150,
-        "y": 100,
+        "y": 200,
         "wires": [
             [
                 "c9c2e2e4.363d2"
@@ -36,32 +36,10 @@
         "wires": []
     },
     {
-        "id": "f4g5h6i7.j8k9l0",
-        "type": "exec",
-        "z": "da8a7c5c.25758",
-        "command": "python3",
-        "addpay": false,
-        "append": "/data/dronecan_listener.py",
-        "useSpawn": "true",
-        "timer": "",
-        "winHide": false,
-        "oldrc": false,
-        "name": "DroneCAN Listener",
-        "x": 150,
-        "y": 300,
-        "wires": [
-            [
-                "c9c2e2e4.363d2"
-            ],
-            [],
-            []
-        ]
-    },
-    {
         "id": "b3f3b4b5.4c0c48",
         "type": "mqtt-broker",
-        "name": "Local MQTT",
-        "broker": "localhost",
+        "name": "Docker MQTT Broker",
+        "broker": "mqtt-broker",
         "port": "1883",
         "clientid": "",
         "usetls": false,

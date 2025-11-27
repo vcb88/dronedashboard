@@ -16,6 +16,14 @@ services:
     depends_on:
       - mqtt-broker
 
+  emulator:
+    build:
+      context: ./emulator
+    container_name: dronedashboard-emulator
+    depends_on:
+      - mqtt-broker
+    restart: unless-stopped
+
   mqtt-broker:
     image: eclipse-mosquitto:2
     container_name: mqtt-broker
