@@ -41,7 +41,7 @@
         "z": "da8a7c5c.25758",
         "command": "python3",
         "addpay": false,
-        "append": "dronecan_listener.py",
+        "append": "/data/dronecan_listener.py",
         "useSpawn": "true",
         "timer": "",
         "winHide": false,

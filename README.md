@@ -2,11 +2,45 @@
 
 Drone Dashboard is a web service for real-time monitoring and post-session analysis of data from drone hardware tests. It leverages Node-RED for data ingestion and processing, and a React-based frontend for visualization.
 
-## Prerequisites
+## Running with Docker (Recommended)
 
-Before you begin, ensure you have the following software installed on your system:
+This is the easiest way to get the entire service stack up and running.
 
-*   **Node.js:** Version 20.19+ or 22.12+ (to avoid version mismatch warnings). You can use [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions.
+### Prerequisites
+
+*   [Docker](https://docs.docker.com/get-docker/)
+*   [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Steps
+
+1.  **Clone the Repository:**
+    ```sh
+    git clone git@github.com:vcb88/dronedashboard.git
+    cd dronedashboard
+    ```
+
+2.  **Build and Run the Services:**
+    From the root of the `dronedashboard` directory, run:
+    ```sh
+    docker-compose up --build
+    ```
+    This command will:
+    *   Build the `dronedashboard` Docker image based on the `Dockerfile`.
+    *   Start the `dronedashboard` service.
+    *   Start the `mqtt-broker` service (Eclipse Mosquitto).
+
+3.  **Access the Dashboard:**
+    Open your web browser and navigate to:
+    **[http://localhost:1880](http://localhost:1880)**
+
+4.  **Test MQTT:**
+    You can publish MQTT messages to the `mqtt-broker` service, which is running on port `1883`. Use the same testing instructions as in the "Manual Setup" section. The key difference is that the broker is now conveniently running inside a Docker container.
+
+## Manual Setup (Without Docker)
+
+### Prerequisites
+
+*   **Node.js:** Version 20.19+ or 22.12+. You can use [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions.
 *   **npm:** Node Package Manager (usually comes with Node.js).
 *   **Node-RED:** A flow-based development tool for visual programming. Install it globally:
     ```sh
@@ -15,7 +49,7 @@ Before you begin, ensure you have the following software installed on your syste
 *   **Python:** Version 3.6+ to run the DroneCAN listener script.
 *   **MQTT Broker (Optional but Recommended):** For testing the MQTT data flow. [Mosquitto](https://mosquitto.org/) is a popular and lightweight option.
 
-## Installation
+### Installation
 
 1.  **Clone the Repository:**
     ```sh
@@ -39,9 +73,7 @@ Before you begin, ensure you have the following software installed on your syste
     cd ..
     ```
 
-## Running the Application
-
-The entire service (backend and frontend) is managed by a single Node-RED process.
+### Running the Application
 
 1.  **Navigate to the Project Root:**
     Make sure you are in the `dronedashboard` directory.
@@ -61,13 +93,13 @@ The entire service (backend and frontend) is managed by a single Node-RED proces
 
     You should see the Drone Dashboard interface with a real-time chart.
 
-## How to Test
+### How to Test
 
-### 1. Test Emulated DroneCAN Data
+#### 1. Test Emulated DroneCAN Data
 
 The application is configured to automatically start a Python script that emulates DroneCAN data. As soon as you launch the application, you should see the chart on the dashboard start updating with random data for Voltage, Current, and RPM.
 
-### 2. Test MQTT Data
+#### 2. Test MQTT Data
 
 1.  **Ensure MQTT Broker is Running:** Make sure you have a local MQTT broker running on the default port `1883`.
 

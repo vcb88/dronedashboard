@@ -1,5 +1,3 @@
-const path = require('path');
-
 module.exports = {
     // The TCP port that Node-RED will listen on
     uiPort: process.env.PORT || 1880,
@@ -14,9 +12,8 @@ module.exports = {
     //     }
     // },
 
-    // Serve a static directory of files
-    // This is used to serve the compiled React frontend
-    httpStatic: path.join(__dirname, '../frontend/dist'),
+    // Serve a static directory of files from within the Docker container
+    httpStatic: '/data/frontend_dist',
 
     // Any other global settings for the Node-RED runtime
     functionGlobalContext: {
