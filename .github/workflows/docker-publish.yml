@@ -86,8 +86,12 @@ jobs:
     runs-on: ubuntu-latest
         
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Copy files to server
         uses: appleboy/scp-action@master
+        working-directory: ./dronedashboard 
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
