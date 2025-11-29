@@ -5,12 +5,11 @@ module.exports = {
     // The file containing the flows
     flowFile: 'flows.json',
 
-    // Make the editor UI read-only
-    // editorTheme: {
-    //     projects: {
-    //         enabled: false
-    //     }
-    // },
+    // The root path for the Node-RED editor
+    httpAdminRoot: '/editor',
+
+    // The root path for the dashboard
+    httpNodeRoot: '/',
 
     // Serve a static directory of files from within the Docker container
     httpStatic: '/data/frontend_dist',
