@@ -123,6 +123,16 @@ jobs:
           source: "docker-compose.prod.yml,deploy.sh,nodered/,mosquitto/"
           target: "/home/${{ secrets.REMOTE_USER }}/dronedashboard"
 
+      - name: Set permissions for Mosquitto config
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: 2222
+          script: |
+            sudo chmod -R a+rX /home/${{ secrets.REMOTE_USER }}/dronedashboard/mosquitto/config
+
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
