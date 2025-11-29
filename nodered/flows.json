@@ -211,26 +211,6 @@
         "y": 520,
         "wires": [
             [
-                "g8h9i0j1.k2l3m4"
-            ]
-        ]
-    },
-    {
-        "id": "g8h9i0j1.k2l3m4",
-        "type": "exec",
-        "z": "da8a7c5c.25758",
-        "command": "ls",
-        "addpay": false,
-        "append": "/data/logs",
-        "useSpawn": "false",
-        "timer": "",
-        "winHide": false,
-        "oldrc": false,
-        "name": "List Log Files",
-        "x": 310,
-        "y": 520,
-        "wires": [
-            [
                 "debug_before_format_json"
             ]
         ]
