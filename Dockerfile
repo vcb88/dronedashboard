@@ -23,7 +23,7 @@ USER root
 RUN apk add --no-cache python3 py3-pip build-base
 
 # Install the dronecan Python library
-RUN pip3 install dronecan
+RUN pip3 install dronecan --break-system-packages
 
 # Switch back to the node-red user
 USER node-red
