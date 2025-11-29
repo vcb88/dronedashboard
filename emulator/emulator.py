@@ -53,20 +53,23 @@ def stream_data(client):
                     data_point["timestamp"] = int(time.time())
                     payload = json.dumps(data_point)
                     
+                    print(f"Attempting to publish to {MQTT_TOPIC}...") # Added debug print
                     result = client.publish(MQTT_TOPIC, payload)
                     status = result[0]
+                    print(f"Publish status: {status}") # Added debug print for status
+
                     if status == 0:
                         timestamp_str = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
                         print(f"{timestamp_str} Published to {MQTT_TOPIC}: altitude={data_point['altitude_relative']:.1f}m, mode={data_point['flight_mode']}")
                     else:
-                        print(f"Failed to send message to topic {MQTT_TOPIC}")
+                        print(f"Failed to send message to topic {MQTT_TOPIC}. Status: {status}") # Modified print
 
                     last_timestamp = current_timestamp
 
                 except json.JSONDecodeError:
                     print(f"Skipping malformed line: {line.strip()}")
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    print(f"An unexpected error occurred during data streaming: {e}") # Modified print
                     time.sleep(1)
         
         print("Finished streaming file. Restarting from the beginning in 5 seconds...")
