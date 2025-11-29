@@ -93,17 +93,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Change ownership of old volumes for cleanup
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.REMOTE_SSH_KEY }}
-          port: 2222
-          script: |
-            sudo chown -R ${{ secrets.REMOTE_USER }}:${{ secrets.REMOTE_USER }} /home/${{ secrets.REMOTE_USER }}/dronedashboard/mosquitto || true
-            sudo chown -R ${{ secrets.REMOTE_USER }}:${{ secrets.REMOTE_USER }} /home/${{ secrets.REMOTE_USER }}/dronedashboard/nodered || true
-
       - name: Clean nodered directory on server
         uses: appleboy/ssh-action@master
         with:
