@@ -167,7 +167,7 @@
         "y": 360,
         "wires": [
             [
-                "c9c2e2e4.363d2"
+                "delay_calc_replay"
             ]
         ]
     },
@@ -230,11 +230,7 @@
         "statusType": "auto",
         "x": 400,
         "y": 480,
-        "wires": [
-            [
-                "n5o6p7q8.r9s0t1"
-            ]
-        ]
+        "wires": []
     },
     {
         "id": "u2v3w4x5.y6z7a8",
@@ -284,10 +280,54 @@
         "y": 520,
         "wires": [
             [
+                "n5o6p7q8.r9s0t1"
+            ],
+            [
                 "debug_before_format_json"
             ],
-            [],
             []
+        ]
+    },
+    {
+        "id": "delay_calc_replay",
+        "type": "function",
+        "z": "da8a7c5c.25758",
+        "name": "Calculate Replay Delay",
+        "func": "let lastTimestamp = context.get('lastTimestamp') || 0;\nlet currentTimestamp = msg.payload.timestamp;\n\nif (lastTimestamp === 0) {\n    // First message, no delay\n    msg.delay = 0;\n} else {\n    msg.delay = (currentTimestamp - lastTimestamp) * 1000; // Convert seconds to milliseconds\n    if (msg.delay < 0) msg.delay = 0; // Handle out-of-order or negative delays\n}\n\ncontext.set('lastTimestamp', currentTimestamp);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 320,
+        "wires": [
+            [
+                "delay_replay"
+            ]
+        ]
+    },
+    {
+        "id": "delay_replay",
+        "type": "delay",
+        "z": "da8a7c5c.25758",
+        "name": "Replay Delay",
+        "pauseType": "delayv",
+        "timeout": "5000",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "randomFirst": "1",
+        "randomLast": "1",
+        "randomUnits": "milliseconds",
+        "drop": false,
+        "allowrate": false,
+        "x": 890,
+        "y": 320,
+        "wires": [
+            [
+                "c9c2e2e4.363d2"
+            ]
         ]
     }
 ]
