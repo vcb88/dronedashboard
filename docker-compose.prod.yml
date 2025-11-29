@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   dronedashboard:
-    image: ghcr.io/${{ github.repository_owner }}/dronedashboard:latest
+    image: ghcr.io/${DOCKER_USERNAME}/dronedashboard:latest
     restart: unless-stopped
     volumes:
       # Mount the flows and settings to allow for changes without rebuilding
@@ -24,6 +24,14 @@ services:
       - "traefik.http.routers.dronedashboard-insecure.entrypoints=http"
       - "traefik.http.routers.dronedashboard-insecure.middlewares=https-redirect"
       - "traefik.http.routers.dronedashboard-insecure.service=dronedashboard@docker"
+
+  emulator:
+    image: ghcr.io/${DOCKER_USERNAME}/dronedashboard-emulator:latest
+    restart: unless-stopped
+    depends_on:
+      - mqtt-broker
+    networks:
+      - proxy
 
   mqtt-broker:
     image: eclipse-mosquitto:2
