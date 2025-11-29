@@ -231,11 +231,26 @@
         "y": 520,
         "wires": [
             [
-                "n5o6p7q8.r9s0t1"
-            ],
-            [],
-            []
+                "debug_before_format_json"
+            ]
         ]
+    },
+    {
+        "id": "debug_before_format_json",
+        "type": "debug",
+        "z": "da8a7c5c.25758",
+        "name": "Before Format JSON",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 400,
+        "y": 480,
+        "wires": []
     },
     {
         "id": "n5o6p7q8.r9s0t1",
