@@ -9,6 +9,7 @@ services:
       # Mount the flows and settings to allow for changes without rebuilding
       - ./nodered/flows.json:/data/flows.json
       - ./nodered/settings.js:/data/settings.js
+      - ./nodered:/app
       # You can also mount a local folder for logs
       - ./logs:/data/logs
     depends_on:
