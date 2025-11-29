@@ -20,15 +20,22 @@ def create_mqtt_client():
     client = mqtt.Client()
     client.on_connect = on_connect
     
+    print("Attempting to create MQTT client...") # Added debug print
     while True:
         try:
+            print(f"Connecting to MQTT Broker at {MQTT_BROKER_HOST}:{MQTT_BROKER_PORT}...") # Added debug print
             client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
+            print("MQTT client connected successfully (loop break).") # Added debug print
             break
         except ConnectionRefusedError:
             print("Connection to MQTT broker refused. Retrying in 5 seconds...")
             time.sleep(5)
+        except Exception as e: # Catch other potential connection errors
+            print(f"An unexpected error occurred during MQTT connection: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
             
     client.loop_start()
+    print("MQTT client loop started.") # Added debug print
     return client
 
 def stream_data(client):
