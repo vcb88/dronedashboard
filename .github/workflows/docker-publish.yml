@@ -93,6 +93,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Clean nodered directory on server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: 2222
+          script: |
+            rm -rf /home/${{ secrets.REMOTE_USER }}/dronedashboard/nodered
+
       - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
