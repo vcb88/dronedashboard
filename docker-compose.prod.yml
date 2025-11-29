@@ -1,6 +1,6 @@
 services:
   dronedashboard:
-    build: ./backend_ws
+    image: ghcr.io/${DOCKER_USERNAME}/dronedashboard:latest
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -38,7 +38,7 @@ services:
       - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
 
   dronecan_bridge:
-    build: ./dronecan_bridge
+    image: ghcr.io/${DOCKER_USERNAME}/dronedashboard-dronecan-bridge:latest
     restart: unless-stopped
     depends_on:
       - mqtt-broker

@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: vcb88/dronedashboard
+  IMAGE_OWNER: ${{ github.repository_owner }}
 
 jobs:
   build_and_push:
@@ -26,21 +26,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Generate build-time variables
-        id: build_vars
-        run: |
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -52,37 +37,48 @@ jobs:
           npm install
           npm run build
           cd ..
+      
+      - name: Extract metadata for dronedashboard image
+        id: meta_backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/dronedashboard
 
-      - name: Build and push dronedashboard Docker image
+      - name: Build and push dronedashboard (backend) image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend_ws
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            COMMIT_SHA=${{ env.COMMIT_SHA }}
-            BUILD_DATE=${{ env.BUILD_DATE }}
+          tags: ${{ steps.meta_backend.outputs.tags }}
+          labels: ${{ steps.meta_backend.outputs.labels }}
 
-      - name: Extract metadata (tags, labels) for Emulator Docker image
+      - name: Extract metadata for dronecan_bridge image
+        id: meta_bridge
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/dronedashboard-dronecan-bridge
+
+      - name: Build and push dronecan_bridge image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dronecan_bridge
+          push: true
+          tags: ${{ steps.meta_bridge.outputs.tags }}
+          labels: ${{ steps.meta_bridge.outputs.labels }}
+
+      - name: Extract metadata for Emulator image
         id: meta_emulator
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/dronedashboard-emulator
-          tags: |
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/dronedashboard-emulator
 
-      - name: Build and push Emulator Docker image
+      - name: Build and push Emulator image
         uses: docker/build-push-action@v5
         with:
           context: ./emulator
           push: true
           tags: ${{ steps.meta_emulator.outputs.tags }}
           labels: ${{ steps.meta_emulator.outputs.labels }}
-          build-args: |
-            COMMIT_SHA=${{ env.COMMIT_SHA }}
-            BUILD_DATE=${{ env.BUILD_DATE }}
 
   deploy:
     needs: build_and_push
@@ -90,29 +86,6 @@ jobs:
     runs-on: ubuntu-latest
         
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Clean nodered directory on server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.REMOTE_SSH_KEY }}
-          port: 2222
-          script: |
-            sudo rm -rf /home/${{ secrets.REMOTE_USER }}/dronedashboard/nodered
-
-      - name: Clean mosquitto directory on server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.REMOTE_SSH_KEY }}
-          port: 2222
-          script: |
-            sudo rm -rf /home/${{ secrets.REMOTE_USER }}/dronedashboard/mosquitto
-
       - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
@@ -120,10 +93,11 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: 2222
-          source: "docker-compose.prod.yml,deploy.sh,nodered/,mosquitto/"
+          source: "docker-compose.prod.yml,deploy.sh,mosquitto/"
           target: "/home/${{ secrets.REMOTE_USER }}/dronedashboard"
+          overwrite: true
 
-      - name: Set ownership for Mosquitto config
+      - name: Set ownership and permissions
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
@@ -132,15 +106,6 @@ jobs:
           port: 2222
           script: |
             sudo chown -R 1883:1883 /home/${{ secrets.REMOTE_USER }}/dronedashboard/mosquitto/config
-
-      - name: Set permissions for Mosquitto config
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.REMOTE_SSH_KEY }}
-          port: 2222
-          script: |
             sudo chmod -R a+rX /home/${{ secrets.REMOTE_USER }}/dronedashboard/mosquitto/config
 
       - name: Deploy to Server
