@@ -37,6 +37,13 @@ services:
       # Middleware для редиректа HTTP -> HTTPS
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+      # Middleware для WebSocket
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
+      
+      # Применяем middleware к WebSocket роутеру
+      - "traefik.http.routers.dronedashboard.middlewares=ws-headers"      
       
 
   emulator:
