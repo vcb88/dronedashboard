@@ -77,7 +77,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: 2222
-          source: "docker-compose.yml,deploy.sh"
+          source: "docker-compose.prod.yml,deploy.sh"
           target: "/home/${{ secrets.REMOTE_USER }}/dronedashboard"
 
       - name: Deploy to Server

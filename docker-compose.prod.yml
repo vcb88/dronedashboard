@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  dronedashboard:
+    build: .
+    container_name: dronedashboard
+    restart: unless-stopped
+    volumes:
+      # Mount the flows and settings to allow for changes without rebuilding
+      - ./nodered/flows.json:/data/flows.json
+      - ./nodered/settings.js:/data/settings.js
+      # You can also mount a local folder for logs
+      - ./logs:/data/logs
+    depends_on:
+      - mqtt-broker
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dronedashboard.rule=Host(`dronedashboard.site`)"
+      - "traefik.http.routers.dronedashboard.entrypoints=https"
+      - "traefik.http.routers.dronedashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dronedashboard.loadbalancer.server.port=1880"
+      - "traefik.http.routers.dronedashboard-insecure.rule=Host(`dronedashboard.site`)"
+      - "traefik.http.routers.dronedashboard-insecure.entrypoints=http"
+      - "traefik.http.routers.dronedashboard-insecure.middlewares=https-redirect"
+      - "traefik.http.routers.dronedashboard-insecure.service=dronedashboard@docker"
+
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
