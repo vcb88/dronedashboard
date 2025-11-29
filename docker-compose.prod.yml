@@ -4,6 +4,12 @@ services:
   dronedashboard:
     image: ghcr.io/${DOCKER_USERNAME}/dronedashboard:latest
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:1880"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s    
     volumes:
       # Mount the flows and settings to allow for changes without rebuilding
       - ./nodered/flows.json:/data/flows.json
@@ -43,7 +49,10 @@ services:
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
       
       # Применяем middleware к WebSocket роутеру
-      - "traefik.http.routers.dronedashboard.middlewares=ws-headers"      
+      - "traefik.http.routers.dronedashboard.middlewares=ws-headers"  
+
+
+      
       
 
   emulator:
