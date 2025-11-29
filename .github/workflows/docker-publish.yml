@@ -53,13 +53,33 @@ jobs:
           npm run build
           cd ..
 
-      - name: Build and push Docker image
+      - name: Build and push dronedashboard Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            COMMIT_SHA=${{ env.COMMIT_SHA }}
+            BUILD_DATE=${{ env.BUILD_DATE }}
+
+      - name: Extract metadata (tags, labels) for Emulator Docker image
+        id: meta_emulator
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/dronedashboard-emulator
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Emulator Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./emulator
+          push: true
+          tags: ${{ steps.meta_emulator.outputs.tags }}
+          labels: ${{ steps.meta_emulator.outputs.labels }}
           build-args: |
             COMMIT_SHA=${{ env.COMMIT_SHA }}
             BUILD_DATE=${{ env.BUILD_DATE }}
@@ -73,11 +93,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug - List files in repository root
-        run: ls -F
-
-      - name: Debug - List files in dronedashboard directory
-        run: ls -F dronedashboard/
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: Copy files to server
         uses: appleboy/scp-action@master

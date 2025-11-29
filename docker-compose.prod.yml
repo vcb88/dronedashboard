@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   dronedashboard:
-    build: .
-    container_name: dronedashboard
+    image: ghcr.io/${{ github.repository_owner }}/dronedashboard:latest
     restart: unless-stopped
     volumes:
       # Mount the flows and settings to allow for changes without rebuilding
@@ -28,15 +27,11 @@ services:
 
   mqtt-broker:
     image: eclipse-mosquitto:2
-    container_name: mqtt-broker
-    ports:
-      - "1883:1883"
-      - "9001:9001"
+    restart: unless-stopped
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
-    restart: unless-stopped
     networks:
       - proxy
 
