@@ -1,3 +1,4 @@
+import datetime
 import time
 import json
 import paho.mqtt.client as mqtt
@@ -55,7 +56,8 @@ def stream_data(client):
                     result = client.publish(MQTT_TOPIC, payload)
                     status = result[0]
                     if status == 0:
-                        print(f"Published to {MQTT_TOPIC}: altitude={data_point['altitude_relative']:.1f}m, mode={data_point['flight_mode']}")
+                        timestamp_str = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+                        print(f"{timestamp_str} Published to {MQTT_TOPIC}: altitude={data_point['altitude_relative']:.1f}m, mode={data_point['flight_mode']}")
                     else:
                         print(f"Failed to send message to topic {MQTT_TOPIC}")
 
