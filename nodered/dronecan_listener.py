@@ -24,14 +24,11 @@ def main():
             # Mock data for demonstration
             mock_data = {
                 "timestamp": time.time(),
-                "source_node_id": random.randint(10, 50),
-                "message_name": "uavcan.equipment.esc.Status",
-                "payload": {
-                    "voltage": round(random.uniform(14.0, 16.8), 2),
-                    "current": round(random.uniform(5.0, 20.0), 2),
-                    "rpm": random.randint(8000, 15000)
-                }
+                "voltage": round(random.uniform(14.0, 16.8), 2),
+                "current": round(random.uniform(5.0, 20.0), 2),
+                "rpm": random.randint(8000, 15000)
             }
+            
             
             print(json.dumps(mock_data), flush=True)
             
