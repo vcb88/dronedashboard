@@ -37,9 +37,9 @@ services:
     image: eclipse-mosquitto:2
     restart: unless-stopped
     volumes:
+      - ./mosquitto/log:/mosquitto/log
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
     networks:
       - proxy
 
