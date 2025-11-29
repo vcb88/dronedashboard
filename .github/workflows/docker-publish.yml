@@ -1,0 +1,97 @@
+name: Docker Publish and Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: vcb88/dronedashboard
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Generate build-time variables
+        id: build_vars
+        run: |
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            COMMIT_SHA=${{ env.COMMIT_SHA }}
+            BUILD_DATE=${{ env.BUILD_DATE }}
+
+  deploy:
+    needs: build_and_push
+    if: contains(github.event.head_commit.message, 'deploy')
+    runs-on: ubuntu-latest
+        
+    steps:
+      - name: Deploy to Server with Traefik
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: 2222
+          script: |
+            IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/dronedashboard:latest"
+            CONTAINER_NAME="dronedashboard"
+
+            echo "--- Deploying for domain dronedashboard.site ---"
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "Waiting for 30 seconds for GHCR to sync..."
+            sleep 30
+
+            docker pull $IMAGE_NAME
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+            docker run -d \
+              --network proxy \
+              --name $CONTAINER_NAME \
+              --restart always \
+              --label "traefik.enable=true" \
+              --label "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https" \
+              --label "traefik.http.routers.dronedashboard-insecure.rule=Host(\`dronedashboard.site`)" \
+              --label "traefik.http.routers.dronedashboard-insecure.entrypoints=http" \
+              --label "traefik.http.routers.dronedashboard-insecure.middlewares=https-redirect" \
+              --label "traefik.http.routers.dronedashboard-insecure.service=dronedashboard-svc@docker" \
+              --label "traefik.http.routers.dronedashboard.rule=Host(\`dronedashboard.site`)" \
+              --label "traefik.http.routers.dronedashboard.entrypoints=https" \
+              --label "traefik.http.routers.dronedashboard.tls.certresolver=letsencrypt" \
+              --label "traefik.http.routers.dronedashboard.service=dronedashboard-svc@docker" \
+              --label "traefik.http.services.dronedashboard-svc.loadbalancer.server.port=1880" \
+              $IMAGE_NAME
+            echo "--- Deployment of dronedashboard complete ---"
