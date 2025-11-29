@@ -250,21 +250,6 @@
         "statusType": "auto",
         "x": 400,
         "y": 480,
-        "wires": []
-    },
-    {
-        "id": "n5o6p7q8.r9s0t1",
-        "type": "function",
-        "z": "da8a7c5c.25758",
-        "name": "Format as JSON",
-        "func": "// The output of ls is a string with filenames separated by newlines\nmsg.payload = msg.payload.split('\n').filter(file => file.length > 0);\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 500,
-        "y": 520,
         "wires": [
             [
                 "u2v3w4x5.y6z7a8"
