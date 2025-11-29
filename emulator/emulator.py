@@ -7,7 +7,7 @@ import paho.mqtt.client as mqtt
 MQTT_BROKER_HOST = "mqtt-broker"
 MQTT_BROKER_PORT = 1883
 MQTT_TOPIC = "dronedata/telemetry"
-DATA_FILE = "mission_data.jsonl"
+DATA_FILE = "mission_data_5hz.jsonl"
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
