@@ -96,11 +96,11 @@ jobs:
               --restart always \
               --label "traefik.enable=true" \
               --label "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https" \
-              --label "traefik.http.routers.dronedashboard-insecure.rule=Host(`dronedashboard.site`)" \
+              --label "traefik.http.routers.dronedashboard-insecure.rule=Host('dronedashboard.site')" \
               --label "traefik.http.routers.dronedashboard-insecure.entrypoints=http" \
               --label "traefik.http.routers.dronedashboard-insecure.middlewares=https-redirect" \
               --label "traefik.http.routers.dronedashboard-insecure.service=dronedashboard-svc@docker" \
-              --label "traefik.http.routers.dronedashboard.rule=Host(`dronedashboard.site`)" \
+              --label "traefik.http.routers.dronedashboard.rule=Host('dronedashboard.site')" \
               --label "traefik.http.routers.dronedashboard.entrypoints=https" \
               --label "traefik.http.routers.dronedashboard.tls.certresolver=letsencrypt" \
               --label "traefik.http.routers.dronedashboard.service=dronedashboard-svc@docker" \
