@@ -26,7 +26,7 @@ function App() {
       },
     ],
   });
-  const [logFiles, setLogFiles] = useState([]);
+  // const [logFiles, setLogFiles] = useState([]); // Replay functionality disabled
   const [currentMode, setCurrentMode] = useState('Live');
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const ws = useRef(null);
@@ -44,31 +44,31 @@ function App() {
     });
   };
 
-  // Effect for fetching log files
-  useEffect(() => {
-    const fetchLogs = () => {
-      fetch('/api/logs')
-        .then(response => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return response.json();
-        })
-        .then(data => {
-          console.log('Fetched log files:', data);
-          setLogFiles(data);
-        })
-        .catch(error => console.error('Error fetching log files:', error));
-    };
+  // // Effect for fetching log files (Replay functionality disabled)
+  // useEffect(() => {
+  //   const fetchLogs = () => {
+  //     fetch('/api/logs')
+  //       .then(response => {
+  //         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  //         return response.json();
+  //       })
+  //       .then(data => {
+  //         console.log('Fetched log files:', data);
+  //         setLogFiles(data);
+  //       })
+  //       .catch(error => console.error('Error fetching log files:', error));
+  //   };
 
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
+  //   fetchLogs();
+  //   const interval = setInterval(fetchLogs, 30000); // Refresh every 30s
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // WebSocket connection with auto-reconnect
   const connectWebSocket = () => {
     // Dynamic WebSocket URL based on current window location
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.hostname}:1880/ws/data`;
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     
     console.log('Connecting to WebSocket:', wsUrl);
     ws.current = new WebSocket(wsUrl);
@@ -99,13 +99,8 @@ function App() {
 
     ws.current.onmessage = (event) => {
       try {
-        const message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        const payload = JSON.parse(event.data);
         
-        // Handle nested payload structure
-        const payload = message.payload ? 
-          (typeof message.payload === 'string' ? JSON.parse(message.payload) : message.payload) 
-          : message;
-
         console.log('Received payload:', payload);
 
         // Check if payload has required fields
@@ -154,21 +149,22 @@ function App() {
     };
   }, []);
 
-  const handleReplayClick = (file) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      clearChart();
-      setCurrentMode(`Replay: ${file}`);
-      const command = {
-        action: 'replay',
-        file: `/data/logs/${file}`,
-      };
-      ws.current.send(JSON.stringify(command));
-      console.log(`Sent replay command for file: ${file}`);
-    } else {
-      console.error('WebSocket is not open. Status:', connectionStatus);
-      alert('WebSocket connection is not available. Please wait for reconnection.');
-    }
-  };
+  // Replay functionality is disabled for now
+  // const handleReplayClick = (file) => {
+  //   if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+  //     clearChart();
+  //     setCurrentMode(`Replay: ${file}`);
+  //     const command = {
+  //       action: 'replay',
+  //       file: `/data/logs/${file}`,
+  //     };
+  //     ws.current.send(JSON.stringify(command));
+  //     console.log(`Sent replay command for file: ${file}`);
+  //   } else {
+  //     console.error('WebSocket is not open. Status:', connectionStatus);
+  //     alert('WebSocket connection is not available. Please wait for reconnection.');
+  //   }
+  // };
   
   const handleLiveClick = () => {
     clearChart();
@@ -215,7 +211,8 @@ function App() {
           >
             🔴 Go Live
           </button>
-          <h3>Archived Logs</h3>
+          <h3>Archived Logs (Disabled)</h3>
+          {/* Replay functionality disabled
           {logFiles.length > 0 ? (
             <ul>
               {logFiles.map((file, index) => (
@@ -232,6 +229,7 @@ function App() {
           ) : (
             <p>No log files found.</p>
           )}
+          */}
         </div>
       </div>
     </div>

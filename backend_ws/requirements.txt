@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+websockets
+paho-mqtt
+python-multipart

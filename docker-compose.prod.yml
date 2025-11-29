@@ -1,59 +1,49 @@
-version: '3.8'
-
 services:
   dronedashboard:
-    image: ghcr.io/${DOCKER_USERNAME}/dronedashboard:latest
+    build: ./backend_ws
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:1880"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 30s    
+      start_period: 30s
     volumes:
-      # Mount the flows and settings to allow for changes without rebuilding
-      - ./nodered/flows.json:/data/flows.json
-      - ./nodered/settings.js:/data/settings.js
-      # You can also mount a local folder for logs
-      - ./logs:/data/logs
+      - ./frontend/dist:/app/frontend_dist
     depends_on:
       - mqtt-broker
     networks:
       - proxy
     labels:
-
       - "traefik.enable=true"
       
-      # HTTPS router (основной)
+      # Main HTTPS router
       - "traefik.http.routers.dronedashboard.rule=Host(`dronedashboard.site`)"
       - "traefik.http.routers.dronedashboard.entrypoints=https"
       - "traefik.http.routers.dronedashboard.tls=true"
       - "traefik.http.routers.dronedashboard.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dronedashboard.service=dronedashboard"
       
-      # HTTP router (редирект на HTTPS)
+      # HTTP router (redirect to HTTPS)
       - "traefik.http.routers.dronedashboard-insecure.rule=Host(`dronedashboard.site`)"
       - "traefik.http.routers.dronedashboard-insecure.entrypoints=http"
       - "traefik.http.routers.dronedashboard-insecure.middlewares=https-redirect"
       - "traefik.http.routers.dronedashboard-insecure.service=dronedashboard@docker"
       
       # Service definition
-      - "traefik.http.services.dronedashboard.loadbalancer.server.port=1880"
+      - "traefik.http.services.dronedashboard.loadbalancer.server.port=8000"
       
-      # Middleware для редиректа HTTP -> HTTPS
+      # Middleware for HTTP -> HTTPS redirect
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
 
-      # Middleware для WebSocket
-      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
-      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
-      
-      # Применяем middleware к WebSocket роутеру
-      - "traefik.http.routers.dronedashboard.middlewares=ws-headers"  
-
-
-      
-      
+  dronecan_bridge:
+    build: ./dronecan_bridge
+    restart: unless-stopped
+    depends_on:
+      - mqtt-broker
+    networks:
+      - proxy
 
   emulator:
     image: ghcr.io/${DOCKER_USERNAME}/dronedashboard-emulator:latest
