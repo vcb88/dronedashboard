@@ -70,7 +70,17 @@ jobs:
     runs-on: ubuntu-latest
         
     steps:
-      - name: Deploy to Server with Traefik
+      - name: Copy files to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: 2222
+          source: "docker-compose.yml,deploy.sh"
+          target: "/home/${{ secrets.REMOTE_USER }}/dronedashboard"
+
+      - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
@@ -78,32 +88,6 @@ jobs:
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: 2222
           script: |
-            IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/dronedashboard:latest"
-            CONTAINER_NAME="dronedashboard"
-
-            echo "--- Deploying for domain dronedashboard.site ---"
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            echo "Waiting for 30 seconds for GHCR to sync..."
-            sleep 30
-
-            docker pull $IMAGE_NAME
-            docker stop $CONTAINER_NAME || true
-            docker rm $CONTAINER_NAME || true
-            docker run -d \
-              --network proxy \
-              --name $CONTAINER_NAME \
-              --restart always \
-              --label "traefik.enable=true" \
-              --label "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https" \
-              --label 'traefik.http.routers.dronedashboard-insecure.rule=Host(`dronedashboard.site`)' \
-              --label "traefik.http.routers.dronedashboard-insecure.entrypoints=http" \
-              --label "traefik.http.routers.dronedashboard-insecure.middlewares=https-redirect" \
-              --label "traefik.http.routers.dronedashboard-insecure.service=dronedashboard-svc@docker" \
-              --label 'traefik.http.routers.dronedashboard.rule=Host(`dronedashboard.site`)' \
-              --label "traefik.http.routers.dronedashboard.entrypoints=https" \
-              --label "traefik.http.routers.dronedashboard.tls.certresolver=letsencrypt" \
-              --label "traefik.http.routers.dronedashboard.service=dronedashboard-svc@docker" \
-              --label "traefik.http.services.dronedashboard-svc.loadbalancer.server.port=1880" \
-              $IMAGE_NAME
-            echo "--- Deployment of dronedashboard complete ---"
+            cd /home/${{ secrets.REMOTE_USER }}/dronedashboard
+            chmod +x deploy.sh
+            ./deploy.sh
