@@ -94,6 +94,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Force stop and remove old containers
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: 2222
+          script: |
+            cd /home/${{ secrets.REMOTE_USER }}/dronedashboard || exit 0
+            docker compose -f docker-compose.prod.yml down || exit 0
+
       - name: Clean mosquitto directory on server
         uses: appleboy/ssh-action@master
         with:
