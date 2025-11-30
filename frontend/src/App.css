@@ -34,16 +34,14 @@
 /* Main Content Layout */
 .main-content {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 columns */
-  grid-template-rows: repeat(2, 1fr);    /* 2 rows */
+  grid-template-columns: 1fr 1fr; /* 2 equal columns */
   gap: 1rem;
   padding: 1rem;
   height: calc(100vh - 90px); /* Full height minus header */
 }
 
 .chart-wrapper {
-  grid-column: span 2; /* Charts take 2 columns */
-  grid-row: span 2;    /* Charts take 2 rows */
+  grid-column: 1 / 2; /* Charts take the first column */
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -58,31 +56,10 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.sidebar {
-  grid-column: 3 / 4; /* Sidebar takes the 3rd column */
-  grid-row: span 2;     /* Sidebar takes 2 rows */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .map-container {
-  flex: 1;
+  grid-column: 2 / 3; /* Map takes the second column */
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden; /* Ensures leaflet corners are rounded */
-}
-
-.logs-container {
-  flex: 1;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  text-align: left;
-}
-
-.logs-container h2, .logs-container h3 {
-  margin-top: 0;
 }

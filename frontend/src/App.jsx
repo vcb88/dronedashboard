@@ -169,23 +169,17 @@ function App() {
             <Line data={telemetryData} options={telemetryOptions} />
           </div>
         </div>
-        <div className="sidebar">
-          <div className="map-container">
-            <MapContainer center={position} zoom={13} scrollWheelZoom={false} style={{height: "100%", width: "100%"}}>
-              <ChangeView center={position} zoom={14} />
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={position}>
-                <Popup>Drone Location</Popup>
-              </Marker>
-            </MapContainer>
-          </div>
-          <div className="logs-container">
-            <h2>Controls</h2>
-            <p>Live data is always active.</p>
-          </div>
+        <div className="map-container">
+          <MapContainer center={position} zoom={13} scrollWheelZoom={true} style={{height: "100%", width: "100%"}}>
+            <ChangeView center={position} zoom={14} />
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={position}>
+              <Popup>Drone Location</Popup>
+            </Marker>
+          </MapContainer>
         </div>
       </div>
     </div>
