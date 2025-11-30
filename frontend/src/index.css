@@ -22,12 +22,15 @@ a:hover {
   color: #535bf2;
 }
 
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0; /* Ensure no default margin */
+}
+
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100vh; /* Keep min-height for full viewport height */
 }
 
 h1 {

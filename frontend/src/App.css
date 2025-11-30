@@ -39,7 +39,6 @@
   gap: 1rem;
   padding: 1rem;
   height: calc(100vh - 90px); /* Full height minus header */
-  border: 2px solid red; /* DEBUG */
 }
 
 .chart-wrapper {
@@ -47,7 +46,6 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border: 2px solid blue; /* DEBUG */
 }
 
 .chart-container {
@@ -65,5 +63,4 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden; /* Ensures leaflet corners are rounded */
-  border: 2px solid green; /* DEBUG */
 }
