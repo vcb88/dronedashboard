@@ -91,12 +91,13 @@ jobs:
 
       - name: Copy files to server
         uses: appleboy/scp-action@master
+        working-directory: ./dronedashboard
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: 2222
-          source: "dronedashboard/docker-compose.prod.yml,dronedashboard/deploy.sh,dronedashboard/mosquitto/"
+          source: "docker-compose.prod.yml,deploy.sh,mosquitto/"
           target: "/home/${{ secrets.REMOTE_USER }}/dronedashboard"
           overwrite: true
 
