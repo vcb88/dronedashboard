@@ -33,10 +33,9 @@ jobs:
 
       - name: Build frontend
         run: |
-          cd frontend
+          cd dronedashboard/frontend
           npm install
           npm run build
-          cd ..
       
       - name: Extract metadata for dronedashboard image
         id: meta_backend
@@ -47,7 +46,7 @@ jobs:
       - name: Build and push dronedashboard (backend) image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend_ws
+          context: ./dronedashboard/backend_ws
           push: true
           tags: ${{ steps.meta_backend.outputs.tags }}
           labels: ${{ steps.meta_backend.outputs.labels }}
@@ -61,7 +60,7 @@ jobs:
       - name: Build and push dronecan_bridge image
         uses: docker/build-push-action@v5
         with:
-          context: ./dronecan_bridge
+          context: ./dronedashboard/dronecan_bridge
           push: true
           tags: ${{ steps.meta_bridge.outputs.tags }}
           labels: ${{ steps.meta_bridge.outputs.labels }}
@@ -75,7 +74,7 @@ jobs:
       - name: Build and push Emulator image
         uses: docker/build-push-action@v5
         with:
-          context: ./emulator
+          context: ./dronedashboard/emulator
           push: true
           tags: ${{ steps.meta_emulator.outputs.tags }}
           labels: ${{ steps.meta_emulator.outputs.labels }}
@@ -91,13 +90,12 @@ jobs:
 
       - name: Copy files to server
         uses: appleboy/scp-action@master
-        working-directory: ./dronedashboard
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: 2222
-          source: "docker-compose.prod.yml,deploy.sh,mosquitto/"
+          source: "dronedashboard/docker-compose.prod.yml,dronedashboard/deploy.sh,dronedashboard/mosquitto/"
           target: "/home/${{ secrets.REMOTE_USER }}/dronedashboard"
           overwrite: true
 
