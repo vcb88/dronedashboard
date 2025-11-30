@@ -42,6 +42,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/dronedashboard
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push dronedashboard (backend) image
         uses: docker/build-push-action@v5
@@ -56,6 +58,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/dronedashboard-dronecan-bridge
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push dronecan_bridge image
         uses: docker/build-push-action@v5
@@ -70,6 +74,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/dronedashboard-emulator
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Emulator image
         uses: docker/build-push-action@v5
