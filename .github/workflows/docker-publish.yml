@@ -19,9 +19,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: List files for debugging
-        run: ls -R
-
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -36,7 +33,7 @@ jobs:
 
       - name: Build frontend
         run: |
-          cd dronedashboard/frontend
+          cd frontend
           npm install
           npm run build
       
@@ -49,7 +46,7 @@ jobs:
       - name: Build and push dronedashboard (backend) image
         uses: docker/build-push-action@v5
         with:
-          context: ./dronedashboard/backend_ws
+          context: ./backend_ws
           push: true
           tags: ${{ steps.meta_backend.outputs.tags }}
           labels: ${{ steps.meta_backend.outputs.labels }}
@@ -63,7 +60,7 @@ jobs:
       - name: Build and push dronecan_bridge image
         uses: docker/build-push-action@v5
         with:
-          context: ./dronedashboard/dronecan_bridge
+          context: ./dronecan_bridge
           push: true
           tags: ${{ steps.meta_bridge.outputs.tags }}
           labels: ${{ steps.meta_bridge.outputs.labels }}
@@ -77,7 +74,7 @@ jobs:
       - name: Build and push Emulator image
         uses: docker/build-push-action@v5
         with:
-          context: ./dronedashboard/emulator
+          context: ./emulator
           push: true
           tags: ${{ steps.meta_emulator.outputs.tags }}
           labels: ${{ steps.meta_emulator.outputs.labels }}
@@ -91,9 +88,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: List files for debugging
-        run: ls -R
-
       - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
@@ -101,7 +95,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: 2222
-          source: "dronedashboard/docker-compose.prod.yml,dronedashboard/deploy.sh,dronedashboard/mosquitto/"
+          source: "docker-compose.prod.yml,deploy.sh,mosquitto/"
           target: "/home/${{ secrets.REMOTE_USER }}/dronedashboard"
           overwrite: true
 
