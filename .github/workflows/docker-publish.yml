@@ -25,17 +25,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm install
-          npm run build
       
       - name: Extract metadata for dronedashboard image
         id: meta_backend
@@ -48,7 +37,8 @@ jobs:
       - name: Build and push dronedashboard (backend) image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend_ws
+          context: .
+          file: ./backend_ws/Dockerfile
           push: true
           tags: ${{ steps.meta_backend.outputs.tags }}
           labels: ${{ steps.meta_backend.outputs.labels }}

@@ -1,24 +1,30 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+# Stage 1: Build the React frontend
+FROM node:20-alpine as frontend-builder
+WORKDIR /app
+COPY frontend/package*.json ./frontend/
+RUN cd frontend && npm install
+COPY frontend/ ./frontend/
+RUN cd frontend && npm run build
 
-# Set the working directory in the container
+# Stage 2: Build the Python backend
+FROM python:3.9-slim
 WORKDIR /app
 
 # Install curl for healthcheck
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
-
-# Install any needed packages specified in requirements.txt
+# Copy requirements and install dependencies from the specific backend_ws directory
+COPY backend_ws/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application's code into the container at /app
-COPY main.py .
+# Copy backend application code from the specific backend_ws directory
+COPY backend_ws/main.py .
 
-# Expose port 8000 to the Docker network
+# Copy the built frontend from the builder stage
+COPY --from=frontend-builder /app/frontend/dist ./frontend_dist
+
+# Expose port 8000
 EXPOSE 8000
 
-# Define the command to run your application
-# Use 0.0.0.0 to make it accessible from outside the container
+# Run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
