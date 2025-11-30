@@ -2,9 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet'; // Import Leaflet library
+// Import default Leaflet icon images for the fix
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+// Import custom drone icon
+import droneIcon from './assets/drone-icon.png'; // Placeholder: User needs to provide this file
 
 import {
   Chart as ChartJS,
@@ -19,15 +22,20 @@ import {
 import './App.css';
 
 // Fix for Leaflet default icon issue with Webpack/Vite
-L.Marker.prototype.options.icon = L.icon({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
+// This ensures default Leaflet markers work if custom ones are not used or fail
+delete L.Icon.Default.prototype._getIconUrl; // Remove the default icon URL getter
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: iconRetinaUrl,
+  iconUrl: iconUrl,
+  shadowUrl: shadowUrl,
+});
+
+// Define custom drone icon
+const customDroneIcon = L.icon({
+  iconUrl: droneIcon,
+  iconSize: [32, 32], // size of the icon
+  iconAnchor: [16, 16], // point of the icon which will correspond to marker's location
+  popupAnchor: [0, -16] // point from which the popup should open relative to the iconAnchor
 });
 
 ChartJS.register(
@@ -193,7 +201,7 @@ function App() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Marker position={position}>
+            <Marker position={position} icon={customDroneIcon}>
               <Popup>Drone Location</Popup>
             </Marker>
           </MapContainer>
