@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet'; // Import Leaflet library
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +17,18 @@ import {
   Legend,
 } from 'chart.js';
 import './App.css';
+
+// Fix for Leaflet default icon issue with Webpack/Vite
+L.Marker.prototype.options.icon = L.icon({
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
 
 ChartJS.register(
   CategoryScale,
@@ -27,7 +44,7 @@ const MAX_DATA_POINTS = 50;
 const MOSCOW_COORDS = [55.7558, 37.6176];
 
 // A component to automatically update the map's view
-function ChangeView({ center, zoom }) {
+function ChangeView({ center }) { // Removed zoom prop
   const map = useMap();
   useEffect(() => {
     // A small delay is sometimes needed for the map to initialize its size correctly.
@@ -35,10 +52,10 @@ function ChangeView({ center, zoom }) {
       map.invalidateSize();
     }, 100);
     
-    map.setView(center, zoom);
+    map.setView(center, map.getZoom()); // Use current map zoom
 
     return () => clearTimeout(timer);
-  }, [center, zoom, map]);
+  }, [center, map]); // Removed zoom from dependency array
 
   return null;
 }
@@ -171,7 +188,7 @@ function App() {
         </div>
         <div className="map-container">
           <MapContainer center={position} zoom={13} scrollWheelZoom={true} style={{height: "100%", width: "100%"}}>
-            <ChangeView center={position} zoom={14} />
+            <ChangeView center={position} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
