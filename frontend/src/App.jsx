@@ -29,7 +29,17 @@ const MOSCOW_COORDS = [55.7558, 37.6176];
 // A component to automatically update the map's view
 function ChangeView({ center, zoom }) {
   const map = useMap();
-  map.setView(center, zoom);
+  useEffect(() => {
+    // A small delay is sometimes needed for the map to initialize its size correctly.
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+    
+    map.setView(center, zoom);
+
+    return () => clearTimeout(timer);
+  }, [center, zoom, map]);
+
   return null;
 }
 
