@@ -1,72 +1,80 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import './App.css';
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const MAX_DATA_POINTS = 50;
+
 function App() {
-  const [chartData, setChartData] = useState({
+  const [escData, setEscData] = useState({
     labels: [],
     datasets: [
       {
-        label: 'Voltage',
+        label: 'Voltage (V)',
         data: [],
         borderColor: 'rgb(75, 192, 192)',
         tension: 0.1,
+        yAxisID: 'y',
       },
       {
-        label: 'Current',
+        label: 'Current (A)',
         data: [],
         borderColor: 'rgb(255, 99, 132)',
         tension: 0.1,
+        yAxisID: 'y',
       },
       {
         label: 'RPM',
         data: [],
         borderColor: 'rgb(53, 162, 235)',
         tension: 0.1,
+        yAxisID: 'y1',
       },
     ],
   });
-  // const [logFiles, setLogFiles] = useState([]); // Replay functionality disabled
-  const [currentMode, setCurrentMode] = useState('Live');
+
+  const [telemetryData, setTelemetryData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: 'Altitude (m)',
+        data: [],
+        borderColor: 'rgb(255, 159, 64)',
+        tension: 0.1,
+      },
+      {
+        label: 'Speed (m/s)',
+        data: [],
+        borderColor: 'rgb(153, 102, 255)',
+        tension: 0.1,
+      },
+    ],
+  });
+
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
 
-  // Function to clear chart data
-  const clearChart = () => {
-    setChartData({
-      labels: [],
-      datasets: [
-        { ...chartData.datasets[0], data: [] },
-        { ...chartData.datasets[1], data: [] },
-        { ...chartData.datasets[2], data: [] },
-      ],
-    });
-  };
-
-  // // Effect for fetching log files (Replay functionality disabled)
-  // useEffect(() => {
-  //   const fetchLogs = () => {
-  //     fetch('/api/logs')
-  //       .then(response => {
-  //         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  //         return response.json();
-  //       })
-  //       .then(data => {
-  //         console.log('Fetched log files:', data);
-  //         setLogFiles(data);
-  //       })
-  //       .catch(error => console.error('Error fetching log files:', error));
-  //   };
-
-  //   fetchLogs();
-  //   const interval = setInterval(fetchLogs, 30000); // Refresh every 30s
-  //   return () => clearInterval(interval);
-  // }, []);
-
-  // WebSocket connection with auto-reconnect
   const connectWebSocket = () => {
-    // Dynamic WebSocket URL based on current window location
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
@@ -85,7 +93,6 @@ function App() {
     ws.current.onclose = () => {
       console.log('WebSocket connection closed');
       setConnectionStatus('Disconnected');
-      // Auto-reconnect after 5 seconds
       reconnectTimeout.current = setTimeout(() => {
         console.log('Attempting to reconnect...');
         connectWebSocket();
@@ -100,83 +107,85 @@ function App() {
     ws.current.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
-        
-        console.log('Received payload:', payload);
+        const timestamp = payload.timestamp 
+          ? new Date(payload.timestamp * 1000).toLocaleTimeString() 
+          : new Date().toLocaleTimeString();
 
-        // Check if payload has required fields
-        if (payload.voltage === undefined || payload.current === undefined) {
-          console.warn("Received message without expected fields:", payload);
-          return;
+        // Check if it's ESC data
+        if (payload.voltage !== undefined && payload.current !== undefined) {
+          setEscData((prevData) => {
+            const newLabels = [...prevData.labels, timestamp].slice(-MAX_DATA_POINTS);
+            return {
+              labels: newLabels,
+              datasets: [
+                { ...prevData.datasets[0], data: [...prevData.datasets[0].data, payload.voltage].slice(-MAX_DATA_POINTS) },
+                { ...prevData.datasets[1], data: [...prevData.datasets[1].data, payload.current].slice(-MAX_DATA_POINTS) },
+                { ...prevData.datasets[2], data: [...prevData.datasets[2].data, payload.rpm || 0].slice(-MAX_DATA_POINTS) },
+              ],
+            };
+          });
+        } 
+        // Check if it's Telemetry data
+        else if (payload.flight_mode !== undefined && payload.altitude_relative !== undefined) {
+          setTelemetryData((prevData) => {
+            const newLabels = [...prevData.labels, timestamp].slice(-MAX_DATA_POINTS);
+            return {
+              labels: newLabels,
+              datasets: [
+                { ...prevData.datasets[0], data: [...prevData.datasets[0].data, payload.altitude_relative].slice(-MAX_DATA_POINTS) },
+                { ...prevData.datasets[1], data: [...prevData.datasets[1].data, payload.speed || 0].slice(-MAX_DATA_POINTS) },
+              ],
+            };
+          });
         }
-
-        setChartData((prevChartData) => {
-          const timestamp = payload.timestamp 
-            ? new Date(payload.timestamp * 1000).toLocaleTimeString() 
-            : new Date().toLocaleTimeString();
-          
-          const newLabels = [...prevChartData.labels, timestamp];
-          const newVoltageData = [...prevChartData.datasets[0].data, payload.voltage];
-          const newCurrentData = [...prevChartData.datasets[1].data, payload.current];
-          const newRPMData = [...prevChartData.datasets[2].data, payload.rpm || 0];
-
-          const maxDataPoints = 50;
-          return {
-            labels: newLabels.slice(-maxDataPoints),
-            datasets: [
-              { ...prevChartData.datasets[0], data: newVoltageData.slice(-maxDataPoints) },
-              { ...prevChartData.datasets[1], data: newCurrentData.slice(-maxDataPoints) },
-              { ...prevChartData.datasets[2], data: newRPMData.slice(-maxDataPoints) },
-            ],
-          };
-        });
       } catch (e) {
         console.error("Failed to parse incoming WebSocket message:", event.data, e);
       }
     };
   };
 
-  // Effect for WebSocket connection
   useEffect(() => {
     connectWebSocket();
-
     return () => {
-      if (reconnectTimeout.current) {
-        clearTimeout(reconnectTimeout.current);
-      }
-      if (ws.current) {
-        ws.current.close();
-      }
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+      if (ws.current) ws.current.close();
     };
   }, []);
 
-  // Replay functionality is disabled for now
-  // const handleReplayClick = (file) => {
-  //   if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-  //     clearChart();
-  //     setCurrentMode(`Replay: ${file}`);
-  //     const command = {
-  //       action: 'replay',
-  //       file: `/data/logs/${file}`,
-  //     };
-  //     ws.current.send(JSON.stringify(command));
-  //     console.log(`Sent replay command for file: ${file}`);
-  //   } else {
-  //     console.error('WebSocket is not open. Status:', connectionStatus);
-  //     alert('WebSocket connection is not available. Please wait for reconnection.');
-  //   }
-  // };
-  
-  const handleLiveClick = () => {
-    clearChart();
-    setCurrentMode('Live');
-    console.log('Switched to Live mode');
-  };
-
-  const options = {
+  const escOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: 'top' },
-      title: { display: true, text: `Drone Data - ${currentMode} Mode` },
+      title: { display: true, text: 'ESC Data (Live)' },
+    },
+    scales: { 
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: { display: true, text: 'Voltage (V) / Current (A)' }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        title: { display: true, text: 'RPM' },
+        grid: { drawOnChartArea: false },
+      },
+      x: {
+        title: { display: true, text: 'Time' }
+      }
+    },
+    animation: false,
+  };
+
+  const telemetryOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Telemetry Data (Live)' },
     },
     scales: { 
       y: { 
@@ -199,37 +208,18 @@ function App() {
         </span>
       </header>
       <div className="main-content">
-        <div className="chart-container">
-          <Line data={chartData} options={options} />
+        <div className="chart-wrapper">
+          <div className="chart-container">
+            <Line data={escData} options={escOptions} />
+          </div>
+          <div className="chart-container">
+            <Line data={telemetryData} options={telemetryOptions} />
+          </div>
         </div>
         <div className="logs-container">
           <h2>Controls</h2>
-          <button 
-            onClick={handleLiveClick} 
-            disabled={currentMode === 'Live' || connectionStatus !== 'Connected'}
-            className="live-button"
-          >
-            🔴 Go Live
-          </button>
+          <p>Live data is always active.</p>
           <h3>Archived Logs (Disabled)</h3>
-          {/* Replay functionality disabled
-          {logFiles.length > 0 ? (
-            <ul>
-              {logFiles.map((file, index) => (
-                <li key={index}>
-                  <button 
-                    onClick={() => handleReplayClick(file)}
-                    disabled={connectionStatus !== 'Connected'}
-                  >
-                    ▶️ Replay: {file}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No log files found.</p>
-          )}
-          */}
         </div>
       </div>
     </div>
