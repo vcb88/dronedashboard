@@ -7,7 +7,7 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 // Import custom drone icon
-import droneIcon from './assets/drone-icon.png'; // Placeholder: User needs to provide this file
+import droneIcon from './assets/drone-icon.svg';
 
 import {
   Chart as ChartJS,
