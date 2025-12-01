@@ -4,15 +4,15 @@ Drone Dashboard is a web service for real-time monitoring and post-session analy
 
 ## Architecture Overview
 
-The project consists of three main services orchestrated by Docker Compose:
+The project consists of several containerized services orchestrated by Docker Compose and exposed via Traefik:
 
-*   **Emulator (`emulator/`):** A Python service that simulates and publishes realistic drone telemetry data to the MQTT broker. It replays pre-generated mission scenarios.
+*   **Emulator (`emulator/`):** A Python service that simulates and publishes realistic drone telemetry (`dronedata/telemetry`) and ESC (`dronedata/esc`) data to the MQTT broker. It replays pre-generated mission scenarios.
 *   **MQTT Broker (`mosquitto/`):** An Eclipse Mosquitto broker that handles message passing between services.
-*   **Dashboard Service (`dronedashboard/`):** A Node-RED instance that:
-    *   Subscribes to MQTT topics for live data.
-    *   Saves all incoming data to log files.
-    *   Serves the frontend application.
-    *   Provides an API for listing logs and a WebSocket for data streaming.
+*   **Backend & Frontend Service (`backend_ws/`):** A Python FastAPI application that:
+    *   Subscribes to MQTT topics (`dronedata/#`) for live data.
+    *   Provides a WebSocket endpoint (`/ws`) to stream live data to connected frontend clients.
+    *   Serves the React frontend application (which is built into its Docker image).
+*   **DroneCAN Bridge (`dronecan_bridge/`):** A Python service that simulates a DroneCAN interface, generating and publishing ESC data to the MQTT broker. (Note: This service will be removed in future iterations as the Emulator takes over full data generation).
 
 For a more detailed explanation of the architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
@@ -23,9 +23,9 @@ For a more detailed explanation of the architecture, see [ARCHITECTURE.md](./ARC
 *   [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### For Development (to modify the code)
-*   **Node.js:** Version 20.19+ or 22.12+. We recommend using [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions.
+*   **Node.js:** Version 20.19+ or 22.12+ (for frontend development). We recommend using [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions.
 *   **npm:** Node Package Manager (comes with Node.js).
-*   **Python:** Version 3.9+ for the emulator service.
+*   **Python:** Version 3.9+ (for backend and emulator services).
 
 ## How to Run
 
@@ -36,29 +36,23 @@ For a more detailed explanation of the architecture, see [ARCHITECTURE.md](./ARC
     ```
 
 2.  **Build and Run the Services:**
-    From the root of the `dronedashboard` directory, run:
+    From the root of the `dronedashboard` directory, ensure your `DOCKER_USERNAME` environment variable is set (e.g., `export DOCKER_USERNAME=vcb88`) or pass it as an argument to `deploy.sh`.
+    Then run the deployment script:
     ```sh
-    docker-compose up --build
+    ./deploy.sh your_docker_username
     ```
-    This command will build the Docker images and start all three services.
+    This script will build the Docker images (if not already built by CI/CD) and start all services.
 
 3.  **Access the Dashboard:**
-    Open your web browser and navigate to:
-    **[http://localhost:1880](http://localhost:1880)**
+    Open your web browser and navigate to the configured domain, e.g.:
+    **[https://dronedashboard.site](https://dronedashboard.site)** (assuming Traefik is configured for HTTPS)
 
 ## How It Works
 
-The dashboard supports two main modes: **Live Data** and **Log Replay**.
+The dashboard displays real-time data from simulated drone missions.
 
 ### Live Data Flow
-1.  The **Emulator** service starts automatically and begins streaming mission data to the `dronedata/telemetry` MQTT topic.
-2.  The **Dashboard Service** (Node-RED) receives the message.
-3.  The message is immediately **archived** by appending it to `/logs/full_archive.jsonl`.
-4.  The message is also forwarded over a WebSocket to all connected frontend clients.
-5.  The **Frontend** receives the WebSocket message and updates the charts in real-time.
-
-### Log Replay Flow
-1.  The frontend fetches a list of available logs via the `/api/logs` endpoint.
-2.  When a user clicks "Replay" on a log file, the frontend sends a WebSocket command to the backend (e.g., `{"action": "replay", "file": "..."}`).
-3.  Node-RED receives the command, reads the specified log file, and streams its contents line-by-line over the WebSocket to the frontend.
-4.  The frontend displays the replayed data on the charts.
+1.  The **Emulator** service starts and streams simulated telemetry (`dronedata/telemetry`) and ESC (`dronedata/esc`) data to the MQTT broker.
+2.  The **Backend & Frontend Service** subscribes to `dronedata/#` on the MQTT broker, receiving all live data.
+3.  The received data is immediately forwarded over a WebSocket to all connected frontend clients.
+4.  The **Frontend** (React application) receives the WebSocket messages and updates the charts and map in real-time.
